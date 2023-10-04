@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.liot.hob.model.mapper.BoardMapper">
+	<select id="listArticle" parameterType="map" resultType="boardDto">
+		select boardCode, title, content, createdAt, memberCode
+		from boards
+	</select>
+	
+	<select id="getArticle" parameterType="long" resultType="boardDto">
+		select boardCode, title, content, createdAt, memberCode
+		from boards
+		where boardCode = #{boardCode}
+	</select>
+	
+	<select id="getPageArticle" parameterType="int" resultType="map">
+		select memberCode, nickname, boardCode, title, content, createdAt
+		from boards join members using (memberCode)
+		order by createdAt desc LIMIT #{pageNo}, 10
+	</select>
+	
+	<select id="recentFive" resultType="boardDto">
+		select *
+		from boards
+		order by createdAt desc
+		limit 5
+	</select>
+	
+	<select id="getHits" parameterType="long" resultType="map">
+		select boardCode, memberCode, createdAt
+		from boardhits
+		where boardCode = #{boardCode}
+	</select>
+	
+	<select id="getCount" parameterType="map" resultType="long">
+		select count(boardCode)
+		from boards;
+	</select>
+		
+	<update id="updateHit" parameterType="map">
+		insert into boardhits (memberCode, boardCode)
+		value (#{memberCode}, #{boardCode})
+	</update>
+	
+	<insert id="writeArticle" parameterType="boardDto">
+		insert into boards (title, content, memberCode)
+		value(#{title}, #{content}, #{memberCode})
+	</insert>
+	
+	<update id="modifyArticle" parameterType="boardDto">
+		update boards
+		set title = #{title}, content = #{content}
+		where boardCode = #{boardCode}
+	</update>
+	
+	<delete id="deleteArticle"  parameterType="long">
+		delete from boardhits
+		where boardCode = #{boardCode};
+		
+		delete from boards
+		where boardCode = #{boardCode}
+	</delete>
+
+</mapper>

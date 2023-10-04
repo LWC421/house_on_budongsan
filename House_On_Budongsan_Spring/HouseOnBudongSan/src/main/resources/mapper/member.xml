@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.liot.hob.model.mapper.MemberMapper">
+
+	<select id="login" parameterType="memberDto" resultType="memberDto">
+		select memberCode, memberId, nickname
+		from members join memberinfos using (memberCode)
+		where memberId = #{memberId}
+		and password = #{password}
+		and deletedAt is null
+	</select>
+	
+	<insert id="joinMember" parameterType="hashmap" >
+		insert into members (memberId, nickname, password)
+		value (#{memberId}, #{nickname}, #{password})
+	</insert>
+	
+	<insert id="joinMemberInfo" parameterType="hashmap">
+		<selectKey resultType="long" keyProperty="memberCode" order="BEFORE">
+			select last_insert_id()
+		</selectKey>
+		insert into memberinfos (memberCode, birthday, email)
+		value (#{memberCode}, #{birthday}, #{email})
+	</insert>
+	
+	<update id="modifyMember" parameterType="hashmap" >
+		update members
+		set nickname = #{nickname}, password = #{password} 
+		where memberCode = #{memberCode}
+	</update>
+	
+	<update id="modifyMemberInfo" parameterType="hashmap">
+		update memberinfos
+		set birthday = #{birthday}, email = #{email}
+		where memberCode = #{memberCode}
+	</update>
+	
+	<select id="idCheck" parameterType="string" resultType="memberDto">
+		select memberCode, memberId
+		from members join memberinfos using (memberCode)
+		where memberId = #{memberId}
+		and deletedAt is null
+	</select>
+	
+	<select id="nicknameCheck" parameterType="string" resultType="memberDto">
+		select memberCode, nickname
+		from members join memberinfos using (memberCode)
+		where nickname = #{nickname}
+		and deletedAt is null
+	</select>
+	
+	<update id="saveAccessToken" parameterType="map">
+		update members A
+		set accessToken = #{accessToken}
+		where A.memberId = (
+			select B.memberId 
+		    from (
+				select C.memberId
+		        from members C join memberinfos D using (memberCode)
+				where C.memberId=#{memberId}
+				and D.deletedAt is null
+			) B
+		);
+	</update>
+	
+	<update id="saveRefreshToken" parameterType="map">
+		update members A
+		set refreshToken = #{refreshToken}
+		where A.memberId = (
+			select B.memberId 
+		    from (
+				select C.memberId
+		        from members C join memberinfos D using (memberCode)
+				where C.memberId=#{memberId}
+				and D.deletedAt is null
+			) B
+		);
+	</update>
+	
+	<select id="memberInfo" parameterType="string" resultType="memberDto">
+		select memberCode, memberId, nickname, email, birthday
+		from members join memberinfos using (memberCode)
+		where memberId = #{memberId}
+	</select>
+	
+	<select id="getRefreshToken" parameterType="string" resultType="string">
+		select refreshToken
+		from members
+		where memberId = #{memberId}
+	</select>
+	
+	<update id="deleteRefreshToken" parameterType="map">
+		update members
+		set refreshToken = #{refreshToken}, accessToken = #{accessToken}
+		where memberId = #{memberId}
+	</update>
+	
+	<update id="deleteMember" parameterType="map">
+		update memberinfos A
+		set deletedAt = current_timestamp()
+		where A.memberCode = (
+			select B.memberCode 
+			from (
+				select C.memberCode
+				from members C join memberinfos D using (memberCode)
+				where C.memberId=#{memberId}
+				and D.deletedAt is null
+			) B
+		);
+	</update>
+</mapper>

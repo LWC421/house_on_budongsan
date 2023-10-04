@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.liot.hob.model.mapper.NewsMapper">
+	<select id="recentOne" resultType="newsDto">
+		select *
+		from news
+		order by publishDate desc
+		limit 1
+	</select>
+	
+	<select id="recentFive" resultType="newsDto">
+		select *
+		from news
+		order by publishDate desc
+		limit 5
+	</select>
+	
+	<insert id="insertMultiNews" parameterType="java.util.List">
+		insert into news(title, description, originalLink, link, publishDate)
+		values
+		<foreach collection="list" item="news" separator=",">
+			(#{news.title}, #{news.description}, #{news.originalLink}, #{news.link}, #{news.publishDate})
+		</foreach>
+	</insert>
+	
+	<select id="getCount" resultType="long">
+		select count(*)
+		from news
+	</select>
+	
+	<select id="getPageNews" parameterType="int" resultType="newsDto">
+		select *
+		from news
+		order by publishDate desc 
+		LIMIT #{pageNo}, 10
+	</select>
+</mapper>

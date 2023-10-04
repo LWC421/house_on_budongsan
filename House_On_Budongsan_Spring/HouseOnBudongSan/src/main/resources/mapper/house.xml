@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.liot.hob.model.mapper.HouseMapper">
+
+	<select id="sidoList" resultType="searchItemDto" parameterType="String">
+		select sidoCode `value`, sidoName `title`
+		from sidos
+		where sidoName like concat("%", #{keyword}, "%")
+	</select>
+	
+	<select id="gugunList" resultType="searchItemDto" parameterType="String">
+		select gugunCode `value`, concat(sidoName, " ", gugunName) `title`
+			from guguns g
+			join sidos s on g.sidoCode = s.sidoCode
+		where gugunName like concat("%", #{keyword}, "%")
+	</select>
+	
+	<select id="dongList" resultType="searchItemDto" parameterType="String">
+		select dongCode `value`, concat(sidoName, " ", gugunName, " ", dongName) `title`
+		from dongs d
+			join guguns g on d.gugunCode = g.gugunCode
+			join sidos s on d.sidoCode = s.sidoCode
+		where dongName like concat("%", #{keyword}, "%")
+	</select>
+	
+	<select id="buildingList" resultType="searchItemDto" parameterType="String">
+		select houseInfoCode `value`, concat(apartmentName, " - ", sidoName, " ", gugunName, " ", dongName) `title`
+		from houseInfos
+			join sidos using(sidoCode)
+			join guguns using(gugunCode)
+			join dongs using(dongCode)
+		where apartmentName like concat("%", #{keyword}, "%")
+	</select>
+	
+	
+	<select id="houseInfoListBySidoCode" resultType="houseInfoDto" parameterType="long">
+		select *, concat(s.sidoName, " ", g.gugunName, " ", d.dongName, " ", h.jibun) fullName
+		from houseInfos h
+			join sidos s on s.sidoCode = h.sidoCode
+		    join guguns g on g.gugunCode = h.gugunCode
+		    join dongs d on d.dongcode = h.dongcode
+		where h.sidoCode = #{sidoCode}
+	</select>
+	
+	<select id="houseInfoListByGugunCode" resultType="houseInfoDto" parameterType="long">
+		select *, concat(s.sidoName, " ", g.gugunName, " ", d.dongName, " ", h.jibun) fullName
+		from houseInfos h
+			join sidos s on s.sidoCode = h.sidoCode
+		    join guguns g on g.gugunCode = h.gugunCode
+		    join dongs d on d.dongcode = h.dongcode
+		where h.gugunCode = #{gugunCode}
+	</select>
+	
+	<select id="houseInfoListByDongCode" resultType="houseInfoDto" parameterType="long">
+		select *, concat(s.sidoName, " ", g.gugunName, " ", d.dongName, " ", h.jibun) fullName
+		from houseInfos h
+			join sidos s on s.sidoCode = h.sidoCode
+		    join guguns g on g.gugunCode = h.gugunCode
+		    join dongs d on d.dongcode = h.dongcode
+		where h.dongCode = #{dongCode}
+	</select>
+
+	<select id="houseDealListBySidoCode" resultType="houseDealDto" parameterType="hashMap">
+		select *
+		from houseDeals d
+			join houseInfos h using(houseInfoCode)
+		where h.sidoCode = #{code}
+			and d.dealYear = #{year}
+			and d.dealMonth = #{month}
+	</select>
+	
+	<select id="houseDealListByGugunCode" resultType="houseDealDto" parameterType="hashMap">
+		select *
+		from houseDeals d
+			join houseInfos h using(houseInfoCode)
+		where h.gugunCode = #{code}
+			and d.dealYear = #{year}
+			and d.dealMonth = #{month}
+	</select>
+	
+	<select id="houseDealListByDongCode" resultType="houseDealDto" parameterType="hashMap">
+		select *
+		from houseDeals d
+			join houseInfos h using(houseInfoCode)
+		where h.dongCode = #{code}
+			and d.dealYear = #{year}
+			and d.dealMonth = #{month}
+	</select>
+	
+	<insert id="sidoHit" parameterType="hashMap">
+		insert into sidoHits(memberCode, sidoCode)
+		values(#{memberCode}, #{code})
+	</insert>
+	
+	<insert id="gugunHit" parameterType="hashMap">
+		insert into gugunHits(memberCode, gugunCode)
+		values(#{memberCode}, #{code})
+	</insert>
+	
+	<insert id="dongHit" parameterType="hashMap">
+		insert into dongHits(memberCode, dongCode)
+		values(#{memberCode}, #{code})
+	</insert>
+	
+	<select id="getRecentSidoHit" resultType="hitDto">
+		select sidoName name, sidoCode code, count(*) count
+		from sidoHits
+			join sidos using(sidoCode)
+		where createdAt BETWEEN DATE_ADD(now(), INTERVAL -2 WEEK) and NOW()
+		group by sidoCode
+		order by count desc
+		limit 5;
+	</select>
+	
+	<select id="getRecentGugunHit" resultType="hitDto">
+		select concat(sidoName, ' ', gugunName) name, gugunCode code, count(*) count
+		from gugunHits
+			join guguns g using(gugunCode)
+		    join sidos s on g.sidoCode = s.sidoCode
+		where createdAt BETWEEN DATE_ADD(now(), INTERVAL -2 WEEK) and NOW()
+		group by gugunCode
+		order by count desc
+		limit 5;
+	</select>
+	
+	<select id="getRecentDongHit" resultType="hitDto">
+		select concat(sidoName, ' ', gugunName, ' ', dongName) name, dongCode code, count(*) count
+		from dongHits
+			join dongs d using(dongCode)
+		    join sidos s on d.sidoCode = s.sidoCode
+		    join guguns g on d.gugunCode = g.gugunCode
+		where createdAt BETWEEN DATE_ADD(now(), INTERVAL -2 WEEK) and NOW()
+		group by dongCode
+		order by count desc
+		limit 5;
+	</select>
+	
+	<select id="getRecentBuildingLike" resultType="hitDto">
+		select apartmentName name, houseInfoCode code, count(*) count
+		from houseLikes
+			join houseInfos using(houseInfoCode)
+		where createdAt BETWEEN DATE_ADD(now(), INTERVAL -2 WEEK) and NOW()
+		group by houseInfoCode
+		order by count desc
+		limit 5;
+	</select>
+		
+	<select id="houseInfoListByBuildingCode" resultType="houseInfoDto" parameterType="long">
+		select *, concat(s.sidoName, " ", g.gugunName, " ", d.dongName, " ", h.jibun) fullName
+		from houseInfos h
+			join sidos s on s.sidoCode = h.sidoCode
+		    join guguns g on g.gugunCode = h.gugunCode
+		    join dongs d on d.dongcode = h.dongcode
+		where h.houseInfoCode = #{houseInfoCode}
+	</select>
+		
+	<select id="houseDealListByBuildingCode" resultType="houseDealDto" parameterType="hashMap">
+		select *
+		from houseDeals d
+			join houseInfos h using(houseInfoCode)
+		where h.houseInfoCode = #{code}
+			and d.dealYear = #{year}
+			and d.dealMonth = #{month}
+	</select>
+		
+	<select id="allHouseDealListByBuildingCode" resultType="houseDealDto" parameterType="Long">
+		select *
+		from houseDeals d
+			join houseInfos h using(houseInfoCode)
+		where h.houseInfoCode = #{code}
+	</select>
+		
+	<select id="likeListByMemberCode" resultType="Long" parameterType="Long">
+		select houseInfoCode
+		from houseLikes
+		where memberCode = #{memberCode}
+	</select>
+	
+	<select id="likeListDetailByMemberCode" resultType="houseInfoDto" parameterType="Long">
+		select *, concat(s.sidoName, " ", g.gugunName, " ", d.dongName, " ", h.jibun) fullName
+		from houseLikes
+			join houseInfos h using(houseInfoCode)
+			join sidos s on s.sidoCode = h.sidoCode
+		    join guguns g on g.gugunCode = h.gugunCode
+		    join dongs d on d.dongcode = h.dongcode
+		where memberCode = #{memberCode}
+	</select>
+	
+	<insert id="addLike" parameterType="java.util.HashMap">
+		insert into houseLikes(memberCode, houseInfoCode)
+		values(#{memberCode}, #{houseInfoCode})
+	</insert>
+	
+	<delete id="removeLike" parameterType="java.util.HashMap">
+		delete from houseLikes
+		where memberCode = #{memberCode}
+			and houseInfoCode = #{houseInfoCode}
+	</delete>
+</mapper>

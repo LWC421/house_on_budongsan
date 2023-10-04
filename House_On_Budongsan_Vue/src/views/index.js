@@ -1,0 +1,5 @@
+export { default as HomeView } from './HomeView.vue'
+export { default as HouseView } from './HouseView.vue'
+export { default as MyPageView } from './MyPageView.vue'
+export { default as LoginView } from './LoginView.vue'
+export { default as JoinView } from './JoinView.vue'
